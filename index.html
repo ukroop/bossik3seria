@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Боссик — жизнь и кибер-квест</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  min-height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  background:#0a0a0f;
+  font-family:'Segoe UI',Roboto,sans-serif;
+  overflow:hidden;
+  color:#fff;
+}
+.screen{
+  position:relative;
+  width:100vw;
+  height:100vh;
+  overflow:hidden;
+  background:#0a0a0f;
+}
+.start-screen{
+  position:absolute;
+  inset:0;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  z-index:1000;
+  background:#0a0a0f;
+  transition:opacity .8s ease;
+}
+.start-screen.hidden{opacity:0;pointer-events:none}
+.start-title{
+  font-size:2.2rem;
+  font-weight:300;
+  letter-spacing:6px;
+  color:#ffb86b;
+  margin-bottom:15px;
+  text-align:center;
+  text-shadow:0 0 20px rgba(255,184,107,.4);
+}
+.start-subtitle{
+  font-size:.9rem;
+  color:#777;
+  letter-spacing:3px;
+  margin-bottom:40px;
+}
+.start-btn{
+  padding:15px 50px;
+  font-size:1.1rem;
+  letter-spacing:3px;
+  color:#fff;
+  background:transparent;
+  border:1px solid #ffb86b;
+  border-radius:50px;
+  cursor:pointer;
+  transition:all .3s;
+  text-transform:uppercase;
+  position:relative;
+  z-index:1001;
+}
+.start-btn:hover,.start-btn:active{
+  background:#ffb86b;
+  color:#0a0a0f;
+  box-shadow:0 0 35px rgba(255,184,107,.6);
+}
+
+.comic{
+  position:absolute;
+  inset:0;
+  display:none;
+  opacity:0;
+  transition:opacity 1s ease;
+}
+.comic.active{
+  display:block;
+  opacity:1;
+}
+.comic-inner{
+  position:absolute;
+  inset:20px;
+  border:3px solid #333;
+  border-radius:8px;
+  overflow:hidden;
+  background:#111;
+  box-shadow:0 0 40px rgba(0,0,0,.8) inset;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+}
+.comic-bg{
+  position:absolute;
+  inset:0;
+  transition:background 1.5s ease;
+}
+.comic-content{
+  position:relative;
+  z-index:5;
+  width:100%;
+  height:100%;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  padding:20px;
+  gap:20px;
+}
+
+.fig{
+  position:absolute;
+  width:50px;
+  height:100px;
+  border-radius:25px 25px 6px 6px;
+  transition:all 2s ease;
+  z-index:10;
+}
+.fig .fhead{
+  position:absolute;
+  top:-28px;
+  left:50%;
+  transform:translateX(-50%);
+  width:36px;
+  height:36px;
+  border-radius:50%;
+}
+.fig .fname{
+  position:absolute;
+  bottom:-28px;
+  left:50%;
+  transform:translateX(-50%);
+  font-size:.75rem;
+  letter-spacing:2px;
+  text-transform:uppercase;
+  white-space:nowrap;
+  opacity:.9;
+}
+
+.bossik{background:linear-gradient(180deg,#8b5a2b 0%,#5a3a1a 100%)}
+.bossik .fhead{background:#a86f3a}
+.bossik .fname{color:#ffb86b}
+
+.ruslan{background:linear-gradient(180deg,#2c2c54 0%,#1e1e3a 100%)}
+.ruslan .fhead{background:#3a3a6a}
+.ruslan .fname{color:#a29bfe}
+
+.artem{background:linear-gradient(180deg,#5c1a1a 0%,#3d0f0f 100%)}
+.artem .fhead{background:#7a2c2c}
+.artem .fname{color:#ff6b6b}
+
+.friend{background:linear-gradient(180deg,#1a5c3a 0%,#0f3d26 100%)}
+.friend .fhead{background:#2c7a4f}
+.friend .fname{color:#6bffa3}
+
+.veronika{background:linear-gradient(180deg,#f0d9ff 0%,#c9a0dc 100%)}
+.veronika .fhead{background:#faf0ff}
+.veronika .fname{color:#f0d9ff}
+
+/* CS2 / DDNet экран */
+.cs-score{
+  position:absolute;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  display:flex;
+  align-items:center;
+  gap:40px;
+  z-index:15;
+}
+.cs-team{text-align:center}
+.cs-num{font-size:5rem;font-weight:900;line-height:1}
+.cs-num.win{color:#ffd700;text-shadow:0 0 30px rgba(255,215,0,.6)}
+.cs-num.lose{color:#ff4444;text-shadow:0 0 30px rgba(255,68,68,.6)}
+.cs-label{font-size:.7rem;letter-spacing:3px;color:#888;text-transform:uppercase;margin-top:8px}
+.cs-colon{font-size:3rem;color:#444;font-weight:300}
+.game-title{
+  position:absolute;top:30px;left:50%;transform:translateX(-50%);
+  font-size:1rem;letter-spacing:4px;color:#00d4ff;text-transform:uppercase;
+  text-shadow:0 0 15px rgba(0,212,255,.5);z-index:15;
+}
+
+.subtitle-container{
+  position:absolute;top:20px;left:50%;transform:translateX(-50%);
+  width:90%;max-width:800px;min-height:100px;
+  display:flex;flex-wrap:wrap;justify-content:center;align-items:flex-start;
+  gap:10px;z-index:100;pointer-events:none;
+}
+.subtitle-word{
+  display:inline-block;font-size:1.5rem;font-weight:700;color:#fff;
+  text-shadow:0 0 15px rgba(255,184,107,.7);
+  opacity:0;transform:translateY(-15px);
+  animation:wordIn .7s ease forwards;
+}
+@keyframes wordIn{to{opacity:1;transform:translateY(0)}}
+
+.skip-btn{
+  position:absolute;top:20px;right:20px;padding:8px 15px;
+  background:transparent;border:1px solid #444;color:#777;
+  border-radius:20px;cursor:pointer;font-size:.8rem;z-index:200;display:none;
+}
+.skip-btn.visible{display:block}
+.skip-btn:hover{color:#ffb86b;border-color:#ffb86b}
+
+/* Кнопки перехода и рестарта */
+.next-series-btn,
+.restart-btn{
+  position:absolute;bottom:40px;left:50%;transform:translateX(-50%);
+  padding:14px 40px;font-size:1rem;letter-spacing:2px;
+  color:#0a0a0f;background:#ffb86b;border:none;border-radius:40px;
+  cursor:pointer;z-index:300;display:none;text-transform:uppercase;
+  font-weight:700;box-shadow:0 0 25px rgba(255,184,107,.5);transition:all .3s;
+}
+.next-series-btn.visible,
+.restart-btn.visible{display:block}
+.next-series-btn:hover,
+.restart-btn:hover{
+  background:#ffc98a;box-shadow:0 0 40px rgba(255,184,107,.8);
+  transform:translateX(-50%) scale(1.05);
+}
+
+.voice-status{
+  position:absolute;bottom:15px;left:50%;transform:translateX(-50%);
+  font-size:.7rem;color:#555;letter-spacing:1px;z-index:100;
+  text-align:center;width:90%;
+}
+
+@media(max-width:600px){
+  .subtitle-word{font-size:1.05rem}
+  .fig{width:36px;height:72px}
+  .fig .fhead{width:26px;height:26px;top:-20px}
+  .fig .fname{font-size:.6rem;bottom:-22px}
+  .cs-num{font-size:3.5rem}
+  .cs-score{gap:25px}
+}
+</style>
+</head>
+<body>
+<div class="screen">
+  <div class="start-screen" id="startScreen">
+    <div class="start-title">БОССИК</div>
+    <div class="start-subtitle">жизнь и кибер-квест</div>
+    <button class="start-btn" id="startBtn">Смотреть жизнь</button>
+  </div>
+
+  <button class="skip-btn" id="skipBtn">Пропустить →</button>
+  <div class="subtitle-container" id="subtitleBox"></div>
+  <div class="voice-status" id="voiceStatus">🔊 озвучка включена</div>
+  <button class="next-series-btn" id="nextSeriesBtn">Смотреть 2 серию →</button>
+  <button class="next-series-btn" id="nextSeriesBtn3" style="display:none">Смотреть 3 серию →</button>
+  <button class="restart-btn" id="restartBtn">Смотреть заново ↺</button>
+
+  <!-- ===== СЕРИЯ 1 ===== -->
+  <div class="comic" id="comic1">
+    <div class="comic-inner">
+      <div class="comic-bg" style="background:radial-gradient(circle at 50% 40%,#2a1a0f 0%,#0a0a0f 100%)"></div>
+      <div class="comic-content">
+        <div class="fig bossik" style="left:40%;bottom:25%"><div class="fhead"></div><div class="fname">Боссик</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="comic" id="comic2">
+    <div class="comic-inner">
+      <div class="comic-bg" style="background:radial-gradient(circle at 50% 50%,#1a1a3e 0%,#0a0a14 100%)"></div>
+      <div class="comic-content">
+        <div class="fig bossik" style="left:30%;bottom:30%"><div class="fhead"></div><div class="fname">Боссик</div></div>
+        <div class="fig ruslan" style="left:55%;bottom:30%"><div class="fhead"></div><div class="fname">Руслан</div></div>
+        <div class="fig artem" style="left:70%;bottom:30%"><div class="fhead"></div><div class="fname">Артем</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="comic" id="comic3">
+    <div class="comic-inner">
+      <div class="comic-bg" style="background:radial-gradient(circle at 50% 30%,#3e1a1a 0%,#0f0505 100%)"></div>
+      <div class="comic-content">
+        <div class="fig bossik" style="left:30%;bottom:30%"><div class="fhead"></div><div class="fname">Боссик</div></div>
+        <div class="fig artem" style="left:55%;bottom:30%"><div class="fhead"></div><div class="fname">Артем</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="comic" id="comic4">
+    <div class="comic-inner">
+      <div class="comic-bg" style="background:radial-gradient(circle at 50% 50%,#1a2a3e 0%,#0a0a14 100%)"></div>
+      <div class="comic-content">
+        <div class="fig bossik" style="left:40%;bottom:25%"><div class="fhead"></div><div class="fname">Боссик</div></div>
+        <div class="fig friend" style="left:60%;bottom:25%"><div class="fhead"></div><div class="fname">Друг</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="comic" id="comic5">
+    <div class="comic-inner">
+      <div class="comic-bg" style="background:radial-gradient(circle at 50% 40%,#2a1a2e 0%,#0f0a14 100%)"></div>
+      <div class="comic-content">
+        <div class="fig bossik" style="left:30%;bottom:30%"><div class="fhead"></div><div class="fname">Боссик</div></div>
+        <div class="fig friend" style="left:45%;bottom:30%"><div class="fhead"></div><div class="fname">Друг</div></div>
+        <div class="fig ruslan" style="left:65%;bottom:30%"><div class="fhead"></div><div class="fname">Руслан</div></div>
+        <div class="fig artem" style="left:80%;bottom:30%"><div class="fhead"></div><div class="fname">Артем</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="comic" id="comic6">
+    <div class="comic-inner">
+      <div class="comic-bg" style="background:radial-gradient(circle at 50% 30%,#1a0f2e 0%,#050305 100%)"></div>
+      <div class="comic-content">
+        <div class="fig bossik" style="left:35%;bottom:30%"><div class="fhead"></div><div class="fname">Боссик</div></div>
+        <div class="fig friend" style="left:55%;bottom:30%"><div class="fhead"></div><div class="fname">Друг</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="comic" id="comic7">
+    <div class="comic-inner">
+      <div class="comic-bg" style="background:radial-gradient(circle at 50% 40%,#3e2a4e 0%,#1a0f2e 100%)"></div>
+      <div class="comic-content">
+        <div class="fig bossik" style="left:40%;bottom:30%"><div class="fhead"></div><div class="fname">Боссик</div></div>
+        <div class="fig friend" style="left:60%;bottom:30%"><div class="fhead"></div><div class="fname">Друг</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== СЕРИЯ 2 ===== -->
+  <div class="comic" id="comic8">
+    <div class="comic-inner">
+      <div class="comic-bg" style="background:radial-gradient(circle at 50% 30%,#0a1a2e 0%,#050510 100%)"></div>
+      <div class="comic-content">
+        <div class="game-title">CS2</div>
+        <div class="cs-score">
+          <div class="cs-team"><div class="cs-num lose">0</div><div class="cs-label">Боссик и друг</div></div>
+          <div class="cs-colon">:</div>
+          <div class="cs-team"><div class="cs-num win">100</div><div class="cs-label">Команда Артема</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="comic" id="comic9">
+    <div class="comic-inner">
+      <div class="comic-bg" style="background:radial-gradient(circle at 50% 40%,#2a0a0a 0%,#0a0505 100%)"></div>
+      <div class="comic-content">
+        <div class="fig bossik" style="left:30%;bottom:30%"><div class="fhead"></div><div class="fname">Боссик</div></div>
+        <div class="fig friend" style="left:55%;bottom:30%"><div class="fhead"></div><div class="fname">Друг</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="comic" id="comic10">
+    <div class="comic-inner">
+      <div class="comic-bg" style="background:radial-gradient(circle at 50% 30%,#1a0a0a 0%,#050305 100%)"></div>
+      <div class="comic-content">
+        <div class="game-title">CS2 — РЕВАНШ</div>
+        <div class="cs-score">
+          <div class="cs-team"><div class="cs-num lose">1</div><div class="cs-label">Боссик и друг</div></div>
+          <div class="cs-colon">:</div>
+          <div class="cs-team"><div class="cs-num win">1000</div><div class="cs-label">Команда Артема</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="comic" id="comic11">
+    <div class="comic-inner">
+      <div class="comic-bg" style="background:radial-gradient(circle at 50% 50%,#1a0a2e 0%,#050310 100%)"></div>
+      <div class="comic-content">
+        <div class="fig bossik" style="left:35%;bottom:30%"><div class="fhead"></div><div class="fname">Боссик</div></div>
+        <div class="fig friend" style="left:55%;bottom:30%"><div class="fhead"></div><div class="fname">Друг</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== СЕРИЯ 2: DDNet и Соло ===== -->
+  <div class="comic" id="comic12">
+    <div class="comic-inner">
+      <div class="comic-bg" style="background:radial-gradient(circle at 50% 40%,#0a1a1a 0%,#050510 100%)"></div>
+      <div class="comic-content">
+        <div class="game-title">DDNet</div>
+        <div class="cs-score">
+          <div class="cs-team"><div class="cs-num lose">0</div><div class="cs-label">Боссик и друг</div></div>
+          <div class="cs-colon">:</div>
+          <div class="cs-team"><div class="cs-num win">5</div><div class="cs-label">Руслан</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="comic" id="comic13">
+    <div class="comic-inner">
+      <div class="comic-bg" style="background:radial-gradient(circle at 50% 50%,#1a0a0a 0%,#050305 100%)"></div>
+      <div class="comic-content">
+        <div class="game-title">CS2 — СОЛО</div>
+        <div class="cs-score">
+          <div class="cs-team"><div class="cs-num lose">3</div><div class="cs-label">Боссик и друг</div></div>
+          <div class="cs-colon">:</div>
+          <div class="cs-team"><div class="cs-num win">16</div><div class="cs-label">Артем (соло)</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="comic" id="comic14">
+    <div class="comic-inner">
+      <div class="comic-bg" style="background:radial-gradient(circle at 50% 40%,#2a1a0f 0%,#0a0a0f 100%)"></div>
+      <div class="comic-content">
+        <div class="fig bossik" style="left:30%;bottom:30%"><div class="fhead"></div><div class="fname">Боссик</div></div>
+        <div class="fig friend" style="left:55%;bottom:30%"><div class="fhead"></div><div class="fname">Друг</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== СЕРИЯ 3: Вероника ===== -->
+  <div class="comic" id="comic15">
+    <div class="comic-inner">
+      <div class="comic-bg" style="background:radial-gradient(circle at 50% 40%,#2a1a2e 0%,#0f0a14 100%)"></div>
+      <div class="comic-content">
+        <div class="fig bossik" style="left:30%;bottom:30%"><div class="fhead"></div><div class="fname">Боссик</div></div>
+        <div class="fig veronika" style="left:60%;bottom:30%"><div class="fhead"></div><div class="fname">Вероника</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="comic" id="comic16">
+    <div class="comic-inner">
+      <div class="comic-bg" style="background:radial-gradient(circle at 50% 50%,#3e2a4e 0%,#1a0f2e 100%)"></div>
+      <div class="comic-content">
+        <div class="fig bossik" style="left:35%;bottom:30%"><div class="fhead"></div><div class="fname">Боссик</div></div>
+        <div class="fig veronika" style="left:55%;bottom:30%"><div class="fhead"></div><div class="fname">Вероника</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="comic" id="comic17">
+    <div class="comic-inner">
+      <div class="comic-bg" style="background:radial-gradient(circle at 50% 40%,#3e1a2e 0%,#1a0f1e 100%)"></div>
+      <div class="comic-content">
+        <div class="fig bossik" style="left:40%;bottom:30%"><div class="fhead"></div><div class="fname">Боссик</div></div>
+        <div class="fig veronika" style="left:52%;bottom:30%"><div class="fhead"></div><div class="fname">Вероника</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  function init() {
+    var startScreen = document.getElementById('startScreen');
+    var startBtn = document.getElementById('startBtn');
+    var skipBtn = document.getElementById('skipBtn');
+    var nextSeriesBtn = document.getElementById('nextSeriesBtn');
+    var nextSeriesBtn3 = document.getElementById('nextSeriesBtn3');
+    var restartBtn = document.getElementById('restartBtn');
+    var subtitleBox = document.getElementById('subtitleBox');
+    var voiceStatus = document.getElementById('voiceStatus');
+
+    if (!startBtn) { console.error('Кнопка не найдена'); return; }
+
+    var started = false;
+    var series2Started = false;
+    var series3Started = false;
+    var synth = window.speechSynthesis;
+    var maleVoice = null;
+    var fallbackVoice = null;
+    var currentSeries = 1;
+
+    // === ПОИСК МУЖСКОГО ГОЛОСА ===
+    function pickVoices() {
+      if (!synth) return;
+      var voices = synth.getVoices();
+      maleVoice = null;
+      fallbackVoice = null;
+      var maleKeys = ['yuri', 'pavel', 'dmitry', 'dmitri', 'male', 'муж', 'иван', 'александр', 'максим', 'artem', 'артем'];
+
+      for (var i = 0; i < voices.length; i++) {
+        var v = voices[i];
+        if (!v.lang || v.lang.toLowerCase().indexOf('ru') !== 0) continue;
+        if (!fallbackVoice) fallbackVoice = v;
+        var n = v.name.toLowerCase();
+        for (var k = 0; k < maleKeys.length; k++) {
+          if (n.indexOf(maleKeys[k]) !== -1) {
+            maleVoice = v;
+            break;
+          }
+        }
+        if (maleVoice) break;
+      }
+
+      if (maleVoice) {
+        voiceStatus.textContent = '🔊 мужской голос: ' + maleVoice.name;
+        voiceStatus.style.color = '#8ec5fc';
+      } else if (fallbackVoice) {
+        voiceStatus.textContent = '🔊 голос: ' + fallbackVoice.name + ' (мужской не найден)';
+        voiceStatus.style.color = '#d4a0ff';
+      } else {
+        voiceStatus.textContent = '⚠ русский голос не найден';
+        voiceStatus.style.color = '#ff6b6b';
+      }
+    }
+
+    if (synth) {
+      pickVoices();
+      if (synth.onvoiceschanged !== undefined) {
+        synth.onvoiceschanged = pickVoices;
+      }
+    }
+
+    function speak(text) {
+      if (!synth) return;
+      synth.cancel();
+      var u = new SpeechSynthesisUtterance(text);
+      u.lang = 'ru-RU';
+      u.rate = 0.85;
+      u.pitch = 0.8;
+      u.volume = 1;
+      var chosen = maleVoice || fallbackVoice;
+      if (chosen) u.voice = chosen;
+      synth.speak(u);
+    }
+
+    function showWords(text, wordDelay, holdDelay, next) {
+      subtitleBox.innerHTML = '';
+      speak(text);
+      var words = text.split(' ');
+      var i = 0;
+      function nextWord() {
+        if (i >= words.length) {
+          setTimeout(next, holdDelay);
+          return;
+        }
+        var span = document.createElement('span');
+        span.className = 'subtitle-word';
+        span.textContent = words[i];
+        subtitleBox.appendChild(span);
+        i++;
+        setTimeout(nextWord, wordDelay);
+      }
+      nextWord();
+    }
+
+    function showComic(num) {
+      var comics = document.querySelectorAll('.comic');
+      for (var i = 0; i < comics.length; i++) comics[i].classList.remove('active');
+      var c = document.getElementById('comic' + num);
+      if (c) c.classList.add('active');
+    }
+
+    // === СЕРИЯ 1 ===
+    function runSeries1() {
+      currentSeries = 1;
+      var steps = [
+        { comic: 1, lines: [
+          ['Боссик. Он вырос на улице.', 450, 1200],
+          ['Его жизнь никогда не была простой.', 450, 1500]
+        ]},
+        { comic: 2, lines: [
+          ['В школе он встретил Руслана и Артема.', 450, 1200],
+          ['Двух крепких парней, которые не любили новеньких.', 450, 1500]
+        ]},
+        { comic: 3, lines: [
+          ['Они попытались его сломать.', 450, 1200],
+          ['Но Боссик схватил Артема за галстук.', 450, 1200],
+          ['И сказал: деньги гони.', 450, 1500]
+        ]},
+        { comic: 4, lines: [
+          ['После этого он пропал на две недели.', 450, 1200],
+          ['А когда вернулся — уже с другом.', 450, 1500]
+        ]},
+        { comic: 5, lines: [
+          ['Их снова прессовали. Снова двое против них.', 450, 1200],
+          ['Боссик и друг держалис
